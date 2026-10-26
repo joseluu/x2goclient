@@ -275,14 +275,17 @@ macx {
 win32|win32-* {
   message("building $$TARGET for windows without ldap and cups")
   LIBS += -lwinspool -lws2_32
-  CONFIG += static release
+  CONFIG += release
+  INCLUDEPATH += C:/msys64/mingw32/include
+  LIBS += -LC:/msys64/mingw32/lib
 }
 QT += svg network
 linux|linux-* {
   greaterThan(QT_MAJOR_VERSION, 4): QT += x11extras
 }
 win32|win32-* {
-  greaterThan(QT_MAJOR_VERSION, 4): QT += winextras
+  # Qt5WinExtras not available in all toolchains and unused by the code
+  # greaterThan(QT_MAJOR_VERSION, 4): QT += winextras
 }
 
 mxe:QMAKE_CXXFLAGS += -std=c++11 -Wno-deprecated-declarations

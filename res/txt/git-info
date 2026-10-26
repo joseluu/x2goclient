@@ -1,0 +1,5 @@
+533b810 debian/changelog: sync with git history.
+28c797c Merge branch 'personal/oshneyder/fix-creating-multiple-tmp-files' into 'master'
+d6fdd6d Set temporary file's size to 0 before writing.
+436d36e Reduce creation of temporary files in broker mode.
+dec3538 debian/changelog: sync with git history.

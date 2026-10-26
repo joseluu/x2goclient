@@ -28,9 +28,7 @@
 #include "wapi.h"
 #include "x2gologdebug.h"
 
-#if QT_VERSION > 0x050000
-#include <QtWin>
-#endif
+// Qt5WinExtras (QtWin) removed: replaced by local HICON helper below
 
 #include "compat.h"
 
@@ -229,6 +227,44 @@ bool wapiSetWindowText( HWND wnd, const QString& text)
     return SetWindowText(wnd, (LPCTSTR)text.utf16() );
 }
 
+static HICON pixmapToHICON(const QPixmap &px)
+{
+    if (px.isNull())
+        return 0;
+    QImage img = px.toImage().convertToFormat(QImage::Format_ARGB32);
+    BITMAPV5HEADER bi;
+    ZeroMemory(&bi, sizeof(bi));
+    bi.bV5Size        = sizeof(BITMAPV5HEADER);
+    bi.bV5Width       = img.width();
+    bi.bV5Height      = -img.height();
+    bi.bV5Planes      = 1;
+    bi.bV5BitCount    = 32;
+    bi.bV5Compression = BI_BITFIELDS;
+    bi.bV5RedMask     = 0x00FF0000;
+    bi.bV5GreenMask   = 0x0000FF00;
+    bi.bV5BlueMask    = 0x000000FF;
+    bi.bV5AlphaMask   = 0xFF000000;
+    HDC hdc = GetDC(NULL);
+    void *bits = NULL;
+    HBITMAP hbmp = CreateDIBSection(hdc, reinterpret_cast<BITMAPINFO *>(&bi),
+                                    DIB_RGB_COLORS, &bits, NULL, 0);
+    ReleaseDC(NULL, hdc);
+    if (!hbmp || !bits)
+        return 0;
+    memcpy(bits, img.constBits(), static_cast<size_t>(img.width() * img.height() * 4));
+    HBITMAP hmask = CreateBitmap(img.width(), img.height(), 1, 1, NULL);
+    ICONINFO ii;
+    ii.fIcon    = TRUE;
+    ii.xHotspot = 0;
+    ii.yHotspot = 0;
+    ii.hbmMask  = hmask;
+    ii.hbmColor = hbmp;
+    HICON hIcon = CreateIconIndirect(&ii);
+    DeleteObject(hbmp);
+    DeleteObject(hmask);
+    return hIcon;
+}
+
 void wapiSetWindowIcon ( HWND wnd, const QPixmap& icon)
 {
     int iconx=GetSystemMetrics(SM_CXICON);
@@ -236,16 +272,8 @@ void wapiSetWindowIcon ( HWND wnd, const QPixmap& icon)
     int smallx=GetSystemMetrics(SM_CXSMICON);
     int smally=GetSystemMetrics(SM_CXSMICON);
 
-    HICON largeIcon=0;
-    HICON smallIcon=0;
-
-#if QT_VERSION > 0x050000
-    largeIcon=QtWin::toHICON(icon.scaled(iconx,icony, Qt::IgnoreAspectRatio,Qt::SmoothTransformation));
-    smallIcon=QtWin::toHICON(icon.scaled(smallx,smally, Qt::IgnoreAspectRatio,Qt::SmoothTransformation));
-#else
-    largeIcon=icon.scaled(iconx,icony, Qt::IgnoreAspectRatio,Qt::SmoothTransformation).toWinHICON ();
-    smallIcon=icon.scaled(smallx,smally, Qt::IgnoreAspectRatio,Qt::SmoothTransformation).toWinHICON ();
-#endif
+    HICON largeIcon=pixmapToHICON(icon.scaled(iconx,icony, Qt::IgnoreAspectRatio,Qt::SmoothTransformation));
+    HICON smallIcon=pixmapToHICON(icon.scaled(smallx,smally, Qt::IgnoreAspectRatio,Qt::SmoothTransformation));
     x2goDebug<<"Large icon: "<<largeIcon<<iconx<<"x"<<icony;
     x2goDebug<<"Small icon: "<<smallIcon<<smallx<<"x"<<smally;
     int rez=SetClassLong(wnd,GCL_HICON, (LONG)largeIcon);
