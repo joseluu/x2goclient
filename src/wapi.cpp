@@ -22,7 +22,7 @@
 #include <winerror.h>
 #include <sddl.h>
 #include <winnls.h>
-#include <AccCtrl.h>
+#include <accctrl.h>
 #include <aclapi.h>
 #include <uchar.h>
 #include "wapi.h"

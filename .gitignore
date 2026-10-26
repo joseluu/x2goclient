@@ -8,6 +8,9 @@
 *.dll
 
 client_build/
+client_build_mxe/
+res/txt/git-info
+res/txt/changelog
 plugin_build/
 .build_man2html
 x2goclient
